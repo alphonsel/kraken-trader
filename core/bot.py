@@ -1,5 +1,7 @@
 import time
-from datetime import datetime, UTC
+import sys
+import os
+from datetime import datetime, timedelta, timezone
 
 from config.config import (
     PAIR, TRADE_AMOUNT, RSI_OVERBOUGHT, RSI_OVERSOLD, NEW_BUY_THRESHOLD,
@@ -16,6 +18,7 @@ from utils.kraken_pl import get_pl_from_kraken
 from utils.logger import logger
 from utils.telegram import send_telegram_message
 from utils.utils import fetch_ohlc
+from utils.api_validation import validate_credentials_and_connection  # New import
 
 
 def check_trend_filter(prices, current_price):
@@ -57,6 +60,7 @@ def should_sell(rsi, macd, signal, price, upper_band):
 def bot(api):
     daily_summary_sent = False
     last_buy_price = None
+    
     while True:
         try:
             logger.info("Starting a new iteration ...")
@@ -112,6 +116,7 @@ def bot(api):
                 logger.info("No trade signal detected or not confirmed by trend/higher TF, sleeping for 60 seconds...")
 
             daily_summary_sent = send_summary(api, daily_summary_sent)
+            
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             send_telegram_message(f"Error in bot execution: {e}")
@@ -120,7 +125,7 @@ def bot(api):
 
 
 def send_summary(api, daily_summary_sent):
-    current_hour_utc = datetime.now(tz=UTC).hour
+    current_hour_utc = datetime.now(tz=timezone.utc).hour
     if current_hour_utc == 0 and not daily_summary_sent:
         balance = get_account_balance(api, PAIR)
 

@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
 
 DATA_FILE = os.getenv("TRADE_HISTORY", "./logs/trade_history.json")
@@ -8,7 +8,7 @@ DATA_FILE = os.getenv("TRADE_HISTORY", "./logs/trade_history.json")
 def record_trade(action, pair, amount, price, base_volume, usd_spent_or_gained):
     data = load_data()
     trade_entry = {
-        "timestamp": datetime.now(tz=UTC).isoformat(),
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         "action": action,
         "pair": pair,
         "amount": amount,
@@ -23,7 +23,7 @@ def record_trade(action, pair, amount, price, base_volume, usd_spent_or_gained):
 def record_balance(balance):
     data = load_data()
     balance_entry = {
-        "timestamp": datetime.now(tz=UTC).isoformat(),
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         "balance": balance  # {"base": x, "quote": y}
     }
     data["balances"].append(balance_entry)
@@ -44,7 +44,7 @@ def save_data(data: Dict[str, Any]):
 
 def get_summary(days=1):
     data = load_data()
-    cutoff = datetime.now(tz=UTC) - timedelta(days=days)
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
     trades_in_period = [t for t in data["trades"] if datetime.fromisoformat(t["timestamp"]) > cutoff]
 
     realized_pl = sum(t["usd_value"] for t in trades_in_period if t["action"] == "sell") - \
